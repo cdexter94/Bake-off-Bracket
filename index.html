@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Series 17 Prediction Pool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --crust:#3E2A1E; --crust-soft:#5A4131; --dough:#F6EEDF; --dough-deep:#EDE0C8;
+    --flour:#FFFDF8; --jam:#AE3B32; --jam-deep:#8A2E27; --butter:#E3A93E; --sage:#5F7A52;
+    --line: rgba(62,42,30,0.16); --shadow: 0 1px 0 rgba(62,42,30,0.08);
+    box-sizing:border-box;
+  }
+  *{box-sizing:inherit;}
+  @media (prefers-color-scheme: dark){
+    :root{
+      --crust:#F6EEDF; --crust-soft:#D9C9A8; --dough:#241A13; --dough-deep:#2E2117;
+      --flour:#1B140F; --line: rgba(246,238,223,0.14); --shadow: 0 1px 0 rgba(0,0,0,0.4);
+    }
+  }
+  html,body{height:100%;}
+  body{margin:0;background:var(--dough);color:var(--crust);font-family:'Karla',sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-0.01em;margin:0;}
+  .wrap{max-width:640px;margin:0 auto;padding:0 18px 64px;}
+  header.top{padding:28px 18px 20px;border-bottom:1px solid var(--line);
+    background:radial-gradient(circle at 88% -10%, var(--butter) 0%, transparent 45%), var(--dough);}
+  header.top .kicker{font-size:13px;color:var(--jam);font-weight:700;margin-bottom:6px;}
+  header.top h1{font-size:30px;line-height:1.1;max-width:420px;}
+  header.top p.sub{margin:10px 0 0;font-size:14.5px;color:var(--crust-soft);max-width:440px;line-height:1.5;}
+  .playing-as{font-size:13px;color:var(--crust-soft);margin:14px 0 0;}
+  .playing-as b{color:var(--crust);}
+  .playing-as a{color:var(--jam);font-weight:700;text-decoration:none;margin-left:6px;cursor:pointer;}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;margin:22px 0 20px;border-bottom:2px solid var(--line);-webkit-overflow-scrolling:touch;}
+  nav.tabs button{flex:0 0 auto;background:none;border:none;font-family:'Karla',sans-serif;font-weight:700;font-size:14px;
+    color:var(--crust-soft);padding:10px 14px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+  nav.tabs button.active{color:var(--jam);border-bottom-color:var(--jam);}
+  section.panel{display:none;}
+  section.panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .card{background:var(--flour);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h2{font-size:19px;margin-bottom:4px;}
+  .card .hint{font-size:13px;color:var(--crust-soft);margin:0 0 14px;line-height:1.5;}
+  label{display:block;font-size:12.5px;font-weight:700;color:var(--crust-soft);margin:14px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  select,input[type=text],input[type=password]{width:100%;font-family:'Karla',sans-serif;font-size:15px;padding:11px 12px;
+    border-radius:7px;border:1.5px solid var(--line);background:var(--dough);color:var(--crust);appearance:none;-webkit-appearance:none;}
+  select{background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A4131' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:18px;padding-right:36px;}
+  select:focus,input:focus{outline:2px solid var(--jam);outline-offset:1px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--jam);color:#FBF3E7;border:none;
+    font-family:'Karla',sans-serif;font-weight:700;font-size:14.5px;padding:12px 18px;border-radius:7px;cursor:pointer;margin-top:16px;width:100%;}
+  .btn:active{background:var(--jam-deep);}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .btn.ghost{background:transparent;color:var(--jam);border:1.5px solid var(--jam);}
+  .status{font-size:13px;margin-top:10px;min-height:16px;color:var(--sage);font-weight:600;}
+  .status.err{color:var(--jam);}
+  .baker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:4px;}
+  .baker-tile{border:1.5px solid var(--line);border-radius:8px;padding:9px 6px;text-align:center;background:var(--dough);position:relative;overflow:hidden;}
+  .baker-tile .name{font-weight:700;font-size:13px;}
+  .baker-tile .meta{font-size:10.5px;color:var(--crust-soft);margin-top:2px;line-height:1.3;}
+  .baker-tile.out{opacity:.45;}
+  .baker-tile.out::after{content:"OUT";position:absolute;top:8px;right:-24px;background:var(--jam);color:#FBF3E7;
+    font-size:9px;font-weight:800;letter-spacing:.04em;padding:2px 26px;transform:rotate(35deg);}
+  .baker-tile.star{border-color:var(--butter);background:#FBF0D6;}
+  table.board{width:100%;border-collapse:collapse;font-size:14px;}
+  table.board th{text-align:left;font-size:11.5px;color:var(--crust-soft);font-weight:700;padding:0 8px 8px 0;border-bottom:1.5px solid var(--line);}
+  table.board td{padding:10px 8px 10px 0;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.board tr:last-child td{border-bottom:none;}
+  .rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+    background:var(--dough-deep);font-weight:800;font-size:12px;margin-right:8px;}
+  .rank.gold{background:var(--butter);color:var(--crust);}
+  .pts{font-weight:800;color:var(--jam);font-variant-numeric:tabular-nums;}
+  .name-row{display:flex;align-items:center;}
+  .you-tag{font-size:10px;font-weight:800;color:var(--sage);border:1px solid var(--sage);border-radius:20px;padding:1px 6px;margin-left:6px;}
+  details.rules{margin-top:2px;}
+  details.rules summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--jam);list-style:none;}
+  details.rules summary::-webkit-details-marker{display:none;}
+  details.rules[open] summary{margin-bottom:8px;}
+  details.rules p{font-size:13px;color:var(--crust-soft);line-height:1.6;margin:4px 0;}
+  .empty{text-align:center;padding:24px 12px;color:var(--crust-soft);font-size:14px;}
+  .admin-badge{display:inline-block;font-size:10.5px;font-weight:800;color:var(--jam);border:1px solid var(--jam);border-radius:20px;padding:2px 8px;margin-bottom:10px;}
+  .footer-note{text-align:center;font-size:12px;color:var(--crust-soft);margin-top:28px;line-height:1.6;}
+  .divider-word{text-align:center;font-size:12px;color:var(--crust-soft);font-weight:700;margin:18px 0;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="kicker">🥧 SERIES 17 · WELFORD PARK</div>
+  <h1 class="display">The Prediction Pool</h1>
+  <p class="sub">Lock in your picks before Paul finds a soggy bottom. Scores update as results come in each week.</p>
+  <p class="playing-as" id="playingAs" style="display:none;">Playing as <b id="playingAsName"></b><a id="switchPlayer">not you?</a></p>
+</header>
+
+<!-- NAME GATE -->
+<div class="wrap" id="nameGate">
+  <div class="card">
+    <h2>Who are you?</h2>
+    <p class="hint">Pick your name from the list if you've played before. First time? Add yourself below — no account needed.</p>
+    <label for="existingPlayers">I've played before</label>
+    <select id="existingPlayers"><option value="">Choose your name</option></select>
+    <button class="btn" id="chooseExisting">Continue</button>
+    <div class="divider-word">— or —</div>
+    <label for="newPlayerName">First time playing</label>
+    <input type="text" id="newPlayerName" maxlength="24" placeholder="Type your name">
+    <button class="btn ghost" id="chooseNew">Join the pool</button>
+    <div class="status" id="gateStatus"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap" id="app" style="display:none;">
+  <nav class="tabs" id="tabs">
+    <button data-tab="picks" class="active">My Picks</button>
+    <button data-tab="week">This Week</button>
+    <button data-tab="board">Leaderboard</button>
+    <button data-tab="admin">Admin</button>
+  </nav>
+
+  <!-- MY PICKS -->
+  <section class="panel active" id="panel-picks">
+    <div class="card">
+      <h2>Season picks</h2>
+      <p class="hint">One set of picks for the whole series. You can change these any time before you'd rather not admit you were wrong.</p>
+      <label for="pickWinner">Winner</label>
+      <select id="pickWinner"></select>
+      <label for="pickRunnerUp">Runner-up</label>
+      <select id="pickRunnerUp"></select>
+      <label for="pickFirstOut">First one sent home</label>
+      <select id="pickFirstOut"></select>
+      <button class="btn" id="savePicks">Save season picks</button>
+      <div class="status" id="picksStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>How scoring works</h2>
+      <details class="rules">
+        <summary>Tap to see the points</summary>
+        <p><strong>Winner</strong> correct — 20 pts</p>
+        <p><strong>Runner-up</strong> correct — 10 pts</p>
+        <p><strong>First one out</strong> correct — 5 pts</p>
+        <p>Each week: correct <strong>elimination</strong> guess — 3 pts, correct <strong>Star Baker</strong> guess — 2 pts</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- THIS WEEK -->
+  <section class="panel" id="panel-week">
+    <div class="card">
+      <h2 id="weekTitle">This week's guesses</h2>
+      <p class="hint">Guess who's going home and who takes Star Baker this episode.</p>
+      <label for="weekElim">Who's eliminated?</label>
+      <select id="weekElim"></select>
+      <label for="weekStar">Who's Star Baker?</label>
+      <select id="weekStar"></select>
+      <button class="btn" id="saveWeek">Save this week's guess</button>
+      <div class="status" id="weekStatus"></div>
+    </div>
+    <div class="card">
+      <h2>Still in the tent</h2>
+      <div class="baker-grid" id="bakerGrid"></div>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="panel" id="panel-board">
+    <div class="card">
+      <h2>Leaderboard</h2>
+      <p class="hint">Refreshes automatically every 20 seconds, or pull to refresh your browser.</p>
+      <table class="board" id="boardTable">
+        <thead><tr><th>Player</th><th style="text-align:right;">Points</th></tr></thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+      <div class="empty" id="boardEmpty" style="display:none;">No one's joined yet — be the first.</div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="panel" id="panel-admin">
+    <div class="card">
+      <span class="admin-badge">HOST ONLY</span>
+      <h2>Host PIN</h2>
+      <p class="hint">Enter the PIN you set in the Apps Script to unlock saving below.</p>
+      <label for="adminPin">PIN</label>
+      <input type="password" id="adminPin" placeholder="····">
+    </div>
+
+    <div class="card">
+      <h2>Enter weekly results</h2>
+      <p class="hint">Select the episode, then who actually went home and who won Star Baker.</p>
+      <label for="adminWeek">Episode</label>
+      <select id="adminWeek"></select>
+      <label for="adminElim">Eliminated (hold to multi-select for double evictions)</label>
+      <select id="adminElim" multiple size="6"></select>
+      <label for="adminStar">Star Baker</label>
+      <select id="adminStar"></select>
+      <button class="btn" id="saveResult">Save episode result</button>
+      <div class="status" id="adminStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Open guessing for episode</h2>
+      <p class="hint">Sets which episode shows on the "This Week" tab for everyone.</p>
+      <label for="adminCurrentWeek">Current episode</label>
+      <select id="adminCurrentWeek"></select>
+      <button class="btn ghost" id="saveCurrentWeek">Set current episode</button>
+      <div class="status" id="currentWeekStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Season finale</h2>
+      <p class="hint">Enter once the final airs — this scores everyone's season picks.</p>
+      <label for="finalWinner">Winner</label>
+      <select id="finalWinner"></select>
+      <label for="finalRunnerUp">Runner-up</label>
+      <select id="finalRunnerUp"></select>
+      <button class="btn ghost" id="saveFinal">Save final result</button>
+      <div class="status" id="finalStatus"></div>
+    </div>
+  </section>
+
+  <p class="footer-note">Great British Bake Off · Series 17 · Channel 4<br>Not affiliated with Channel 4 or Love Productions.</p>
+</div>
+
+<script>
+// ============ CONFIGURE THIS ============
+const API_URL = 'https://script.google.com/macros/s/AKfycbyXxIwcQ8Qf-dZWxYyGsDr754QcdFj79bvG7wI0y6CrkTJ8qOSAir3F2p2DLSe5KrjvRQ/exec';
+// =========================================
+
+const BAKERS = [
+  {id:'clara',   name:'Clara',   age:24, home:'Hertfordshire',    job:'Marketing Graduate'},
+  {id:'connie',  name:'Connie',  age:63, home:'London',           job:'NHS Hospital Discharge Lead'},
+  {id:'danni',   name:'Danni',   age:25, home:'Dorset',           job:'HGV Service Centre Administrator'},
+  {id:'gabe',    name:'Gabe',    age:32, home:'West Midlands',    job:'Artist & Drag King'},
+  {id:'gary',    name:'Gary',    age:67, home:'Nottinghamshire',  job:'Retired Garment Technologist'},
+  {id:'molly',   name:'Molly',   age:31, home:'London',           job:'Accessibility Coordinator'},
+  {id:'moyin',   name:'Moyin',   age:22, home:'Essex',            job:'Political Economy Student'},
+  {id:'mo',      name:'Mo',      age:21, home:'West Midlands',    job:'Law Student'},
+  {id:'nikki',   name:'Nikki',   age:50, home:'London',           job:'Advertising Post-Producer'},
+  {id:'shannon', name:'Shannon', age:29, home:'Gloucestershire',  job:'Project Planner & Scheduler'},
+  {id:'tom',     name:'Tom',     age:25, home:'West Yorkshire',   job:'Hairdresser'},
+  {id:'yannis',  name:'Yannis',  age:28, home:'London',           job:'Paediatric Doctor'},
+];
+const WEEKS = 10;
+
+let myName = localStorage.getItem('bakeoffPlayerName') || '';
+let players = [], preseasonDocs = {}, weeklyDocs = {}, resultsDocs = {};
+let pollTimer = null;
+
+function el(id){ return document.getElementById(id); }
+
+function fillSelect(select, list, placeholder){
+  select.innerHTML = '';
+  if(placeholder){
+    const o=document.createElement('option'); o.value=''; o.textContent=placeholder;
+    select.appendChild(o);
+  }
+  list.forEach(b=>{
+    const o=document.createElement('option'); o.value=b.id; o.textContent=b.name;
+    select.appendChild(o);
+  });
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+function setStatus(elm, msg, isErr){
+  elm.textContent = msg; elm.className = 'status' + (isErr?' err':'');
+  if(msg) setTimeout(()=>{ if(elm.textContent===msg) elm.textContent=''; }, 3500);
+}
+
+function eliminatedIds(){
+  const out = new Set();
+  Object.keys(resultsDocs).forEach(k=>{
+    if(/^week\d+$/.test(k) && resultsDocs[k] && resultsDocs[k].eliminated){
+      resultsDocs[k].eliminated.forEach(id=>out.add(id));
+    }
+  });
+  return out;
+}
+function remainingBakers(){
+  const out = eliminatedIds();
+  return BAKERS.filter(b=>!out.has(b.id));
+}
+function currentWeekNum(){
+  const meta = resultsDocs.meta;
+  return (meta && meta.currentWeek) ? meta.currentWeek : 1;
+}
+
+// ---- API ----
+async function apiGet(action, params){
+  const qs = new URLSearchParams(Object.assign({action}, params||{})).toString();
+  const res = await fetch(API_URL + '?' + qs);
+  return res.json();
+}
+async function apiPost(action, payload){
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'}, // avoids CORS preflight
+    body: JSON.stringify(Object.assign({action}, payload||{}))
+  });
+  return res.json();
+}
+
+async function loadState(){
+  try{
+    const state = await apiGet('state');
+    players = state.players || [];
+    preseasonDocs = state.preseason || {};
+    weeklyDocs = state.weekly || {};
+    resultsDocs = state.results || {};
+    populateExistingPlayers();
+    if(myName){
+      prefillMine();
+      refreshWeekPanel();
+      refreshBoard();
+    }
+  }catch(e){ console.warn('load failed', e); }
+}
+
+function populateExistingPlayers(){
+  const sel = el('existingPlayers');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Choose your name</option>';
+  players.slice().sort((a,b)=>a.localeCompare(b)).forEach(name=>{
+    const o = document.createElement('option'); o.value = name; o.textContent = name;
+    sel.appendChild(o);
+  });
+  if(current) sel.value = current;
+}
+
+function prefillMine(){
+  const mine = preseasonDocs[myName];
+  if(mine){
+    if(mine.winner) el('pickWinner').value = mine.winner;
+    if(mine.runnerUp) el('pickRunnerUp').value = mine.runnerUp;
+    if(mine.firstOut) el('pickFirstOut').value = mine.firstOut;
+  }
+}
+
+// ---- tabs ----
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  el('panel-'+btn.dataset.tab).classList.add('active');
+});
+
+function populateStaticSelects(){
+  fillSelect(el('pickWinner'), BAKERS, 'Choose a baker');
+  fillSelect(el('pickRunnerUp'), BAKERS, 'Choose a baker');
+  fillSelect(el('pickFirstOut'), BAKERS, 'Choose a baker');
+  fillSelect(el('finalWinner'), BAKERS, 'Choose a baker');
+  fillSelect(el('finalRunnerUp'), BAKERS, 'Choose a baker');
+  fillSelect(el('adminElim'), BAKERS, null);
+  fillSelect(el('adminStar'), BAKERS, 'Choose a baker');
+  const weekOpts = [];
+  for(let i=1;i<=WEEKS;i++) weekOpts.push({id:'week'+i, name:'Episode '+i+(i===WEEKS?' (Final)':i===WEEKS-1?' (Semi-final)':'')});
+  fillSelect(el('adminWeek'), weekOpts, null);
+  fillSelect(el('adminCurrentWeek'), weekOpts, null);
+}
+
+function refreshWeekPanel(){
+  const wk = currentWeekNum();
+  el('weekTitle').textContent = 'Episode '+wk+' guesses';
+  const remain = remainingBakers();
+  fillSelect(el('weekElim'), remain, 'Choose a baker');
+  fillSelect(el('weekStar'), remain, 'Choose a baker');
+
+  const mine = (weeklyDocs[myName] && weeklyDocs[myName]['week'+wk]) || {};
+  if(mine.eliminatedGuess) el('weekElim').value = mine.eliminatedGuess;
+  if(mine.starBakerGuess) el('weekStar').value = mine.starBakerGuess;
+
+  const out = eliminatedIds();
+  el('bakerGrid').innerHTML = BAKERS.map(b=>{
+    const isOut = out.has(b.id);
+    const isStar = Object.keys(resultsDocs).some(k=>/^week\d+$/.test(k) && resultsDocs[k].starBaker===b.id);
+    return `<div class="baker-tile ${isOut?'out':''} ${isStar?'star':''}">
+      <div class="name">${b.name}</div>
+      <div class="meta">${b.age} · ${b.home}</div>
+    </div>`;
+  }).join('');
+
+  if(el('adminCurrentWeek').value === '') el('adminCurrentWeek').value = 'week'+wk;
+}
+
+function refreshBoard(){
+  const scores = {};
+  const final = resultsDocs.final || {};
+  const week1 = resultsDocs.week1;
+  const allNames = new Set([...players, ...Object.keys(preseasonDocs), ...Object.keys(weeklyDocs)]);
+
+  allNames.forEach(name=>{
+    let pts = 0;
+    const d = preseasonDocs[name];
+    if(d){
+      if(final.winner && d.winner === final.winner) pts += 20;
+      if(final.runnerUp && d.runnerUp === final.runnerUp) pts += 10;
+      if(week1 && d.firstOut && week1.eliminated && week1.eliminated.includes(d.firstOut)) pts += 5;
+    }
+    const wd = weeklyDocs[name];
+    if(wd){
+      Object.entries(wd).forEach(([wk,guess])=>{
+        const actual = resultsDocs[wk];
+        if(!actual) return;
+        if(guess.eliminatedGuess && actual.eliminated && actual.eliminated.includes(guess.eliminatedGuess)) pts += 3;
+        if(guess.starBakerGuess && actual.starBaker && guess.starBakerGuess === actual.starBaker) pts += 2;
+      });
+    }
+    scores[name] = pts;
+  });
+
+  const names = Object.keys(scores);
+  if(names.length === 0){
+    el('boardEmpty').style.display = 'block';
+    el('boardBody').innerHTML = '';
+    return;
+  }
+  el('boardEmpty').style.display = 'none';
+
+  const sorted = names.sort((a,b)=>scores[b]-scores[a]);
+  el('boardBody').innerHTML = sorted.map((name,i)=>{
+    const isMe = name === myName;
+    return `<tr>
+      <td><div class="name-row"><span class="rank ${i===0?'gold':''}">${i+1}</span>${escapeHtml(name)}${isMe?'<span class="you-tag">YOU</span>':''}</div></td>
+      <td style="text-align:right;" class="pts">${scores[name]}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- name gate ----
+function enterApp(name){
+  myName = name;
+  localStorage.setItem('bakeoffPlayerName', name);
+  el('nameGate').style.display = 'none';
+  el('app').style.display = '';
+  el('playingAs').style.display = '';
+  el('playingAsName').textContent = name;
+  prefillMine();
+  refreshWeekPanel();
+  refreshBoard();
+}
+
+el('chooseExisting').addEventListener('click', ()=>{
+  const name = el('existingPlayers').value;
+  if(!name){ setStatus(el('gateStatus'), 'Choose a name from the list.', true); return; }
+  enterApp(name);
+});
+
+el('chooseNew').addEventListener('click', async ()=>{
+  const name = el('newPlayerName').value.trim();
+  if(!name){ setStatus(el('gateStatus'), 'Type a name first.', true); return; }
+  if(players.some(p=>p.toLowerCase()===name.toLowerCase())){
+    setStatus(el('gateStatus'), 'That name\'s taken — try a variant (e.g. add your last initial).', true);
+    return;
+  }
+  try{
+    const res = await apiPost('addPlayer', {name});
+    if(res.ok){ await loadState(); enterApp(name); }
+    else setStatus(el('gateStatus'), res.error || 'Could not join — try again.', true);
+  }catch(e){ setStatus(el('gateStatus'), 'Could not reach the pool — check your connection.', true); }
+});
+
+el('switchPlayer').addEventListener('click', ()=>{
+  if(!confirm('Switch to a different player on this device?')) return;
+  localStorage.removeItem('bakeoffPlayerName');
+  location.reload();
+});
+
+// ---- write handlers ----
+el('savePicks').addEventListener('click', async ()=>{
+  const winner = el('pickWinner').value, runnerUp = el('pickRunnerUp').value, firstOut = el('pickFirstOut').value;
+  if(!winner || !runnerUp || !firstOut){ setStatus(el('picksStatus'), 'Pick all three first.', true); return; }
+  try{
+    const res = await apiPost('savePreseason', {name: myName, winner, runnerUp, firstOut});
+    if(res.ok){ setStatus(el('picksStatus'), 'Saved.'); loadState(); }
+    else setStatus(el('picksStatus'), res.error || 'Could not save.', true);
+  }catch(e){ setStatus(el('picksStatus'), 'Could not save — try again.', true); }
+});
+
+el('saveWeek').addEventListener('click', async ()=>{
+  const wk = 'week'+currentWeekNum();
+  const eliminatedGuess = el('weekElim').value, starBakerGuess = el('weekStar').value;
+  if(!eliminatedGuess && !starBakerGuess){ setStatus(el('weekStatus'), 'Pick at least one.', true); return; }
+  try{
+    const res = await apiPost('saveWeekly', {name: myName, week: wk, eliminatedGuess, starBakerGuess});
+    if(res.ok){ setStatus(el('weekStatus'), 'Saved.'); loadState(); }
+    else setStatus(el('weekStatus'), res.error || 'Could not save.', true);
+  }catch(e){ setStatus(el('weekStatus'), 'Could not save — try again.', true); }
+});
+
+el('saveResult').addEventListener('click', async ()=>{
+  const wk = el('adminWeek').value;
+  const eliminated = Array.from(el('adminElim').selectedOptions).map(o=>o.value);
+  const starBaker = el('adminStar').value;
+  const pin = el('adminPin').value;
+  if(!wk || eliminated.length===0){ setStatus(el('adminStatus'), 'Choose the episode and who left.', true); return; }
+  try{
+    const res = await apiPost('saveResult', {pin, week: wk, eliminated, starBaker: starBaker||null});
+    if(res.ok){ setStatus(el('adminStatus'), 'Result saved.'); loadState(); }
+    else setStatus(el('adminStatus'), res.error || 'Could not save.', true);
+  }catch(e){ setStatus(el('adminStatus'), 'Could not save — try again.', true); }
+});
+
+el('saveCurrentWeek').addEventListener('click', async ()=>{
+  const wk = el('adminCurrentWeek').value;
+  const pin = el('adminPin').value;
+  if(!wk) return;
+  const num = parseInt(wk.replace('week',''),10);
+  try{
+    const res = await apiPost('setCurrentWeek', {pin, week: num});
+    if(res.ok){ setStatus(el('currentWeekStatus'), 'Episode '+num+' is now open for guesses.'); loadState(); }
+    else setStatus(el('currentWeekStatus'), res.error || 'Could not save.', true);
+  }catch(e){ setStatus(el('currentWeekStatus'), 'Could not save — try again.', true); }
+});
+
+el('saveFinal').addEventListener('click', async ()=>{
+  const winner = el('finalWinner').value, runnerUp = el('finalRunnerUp').value;
+  const pin = el('adminPin').value;
+  if(!winner || !runnerUp){ setStatus(el('finalStatus'), 'Choose both.', true); return; }
+  try{
+    const res = await apiPost('saveFinal', {pin, winner, runnerUp});
+    if(res.ok){ setStatus(el('finalStatus'), 'Final result saved — leaderboard updated.'); loadState(); }
+    else setStatus(el('finalStatus'), res.error || 'Could not save.', true);
+  }catch(e){ setStatus(el('finalStatus'), 'Could not save — try again.', true); }
+});
+
+// ---- init ----
+async function init(){
+  populateStaticSelects();
+  await loadState();
+  if(myName){
+    if(players.some(p=>p.toLowerCase()===myName.toLowerCase())){
+      enterApp(myName);
+    } else {
+      // name in localStorage no longer known to the sheet — fall back to the gate
+      myName = '';
+      localStorage.removeItem('bakeoffPlayerName');
+    }
+  }
+  pollTimer = setInterval(loadState, 20000);
+}
+init();
+</script>
+</body>
+</html>
